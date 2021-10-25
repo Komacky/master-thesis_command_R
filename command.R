@@ -433,9 +433,122 @@ demean.F.com2<- demean(demean.F.com, select = c("lag.int_2_within*lagintend2_n_w
 
 demeanset.F.com<- cbind(demeanset.F.com,demean.F.com,demean.F.com2)
 
-############################################
-##############記述統計#####################
-####################################
+##############################################################
+##############記述統計量の算出及び表の作成#####################
+##############################################################
+
+var.set<- data.merge.sub.long.re[
+
+    data.merge.sub.long.re$marexp==2
+  & data.merge.sub.long.re$marriage==2 #2007年のみ未婚=1，修正済み
+  & data.merge.sub.long.re$wave==2007,"PanelID"]
+
+
+
+var.set<-na.omit(var.set)
+var.set<- data.merge.sub.long.re[data.merge.sub.long.re$PanelID %in% var.set,]
+
+var.set<- var.set[,c(1,4,37,38,41,50:55,44:49,56,60:64)]
+var.set %<>% as.data.frame()
+var.set$educ3 %<>% as.factor()
+var.set$lagwork4 %<>% as.factor()
+var.set$lagincome6 %<>% as.factor()
+var.set$lagintend2 %<>% as.factor()
+var.set$lagcohabit %<>% as.factor()
+var.set$lagpartner2 %<>% as.factor()
+var.set$lagmar %<>% as.factor()
+var.set$Y1division %<>% as.factor()
+var.set$Y2workmat %<>% as.factor()
+var.set$Y3indimat %<>% as.factor()
+var.set$Y4marhappy %<>% as.factor()
+var.set$Y5kodomo %<>% as.factor()
+var.set$cohort %<>% as.factor()
+var.set$class %<>% as.factor()
+
+var.set<- var.set[,-c(4,5,7,8,17)]
+
+var.set<- model.matrix(~. ,data=var.set,contrasts.arg = lapply(var.set[,-c(1,2,15,16)], contrasts, contrasts=FALSE))
+var.set %<>% as.data.frame()
+
+names(var.set)
+
+Rxtsum(var.set[var.set$sex==1,], PanelID, c("marriage1" ,   "marriage2" ,   "marriage4"  ,  "marexp1"  ,    "marexp2"     
+                                            ,"educ31" ,      "educ32"     ,  "educ33"   ,    "lagwork41"  ,  "lagwork42" ,   "lagwork43" ,   "lagwork44" ,   "lagincome61" 
+                                            ,"lagincome62" , "lagincome63" , "lagincome64" , "lagincome65"  ,"lagincome66" , "lagpartner21", "lagpartner22", "lagpartner23"
+                                           , "lagintend21" , "lagintend22" , "lagintend23",  "lagintend24" , "lagintend25",  "Y1division0" , "Y1division1"  ,"Y1division2" 
+                                          , "Y1division3" , "Y2workmat0"  , "Y2workmat1"  , "Y2workmat2"  , "Y2workmat3"   ,"Y3indimat0" ,  "Y3indimat1"  , "Y3indimat2"  
+                                          ,"Y3indimat3" ,  "Y4marhappy0" , "Y4marhappy1",  "Y4marhappy2" , "Y4marhappy3",  "Y5kodomo0"  ,  "Y5kodomo1"  ,  "Y5kodomo2"   
+                                           ,"Y5kodomo3"  ,  "cohort0"      ,"cohort1"   ,   "age2007" ,     "age2007_squ" , "class1"     ,  "class2"    ,   "class3" 
+                                          ,"class4"    ,       "lagcohabit0",  "lagcohabit1"))
+
+s<- var.set %>% group_by(PanelID) %>% summarise(mean(lagwork42,na.rm=T))
+mean(s$`mean(lagwork42, na.rm = T)`)
+  
+descriptive.tab <- describeBy(var.set[,-c(1,2)], interp=F,group=var.set$sex )
+descriptive.tab.m<- descriptive.tab$`1`
+descriptive.tab.f<- descriptive.tab$`2`
+descriptive.tab.m$vars<- NULL
+descriptive.tab.f$vars<- NULL
+descriptive.tab.m$n <- NULL
+descriptive.tab.f$n <- NULL
+descriptive.tab.m$se <- NULL
+descriptive.tab.f$se <- NULL
+descriptive.tab.m$trimmed <- NULL
+descriptive.tab.f$trimmed <- NULL
+descriptive.tab.m$skew <- NULL
+descriptive.tab.f$skew <- NULL
+descriptive.tab.m$kurtosis <- NULL
+descriptive.tab.f$kurtosis <- NULL
+descriptive.tab.m$mad <- NULL
+descriptive.tab.f$mad <- NULL
+descriptive.tab.m$median <- NULL
+descriptive.tab.f$median <- NULL
+
+descriptive.tab.m <- data.frame(descriptive.tab.m)
+descriptive.tab.f <- data.frame(descriptive.tab.f)
+
+
+descriptive.tab.m <- Hmisc::format.df(x=descriptive.tab.m[-c(1,51:55),], cdec=c(2,2,0,0,0,0), numeric.dollar=F)
+descriptive.tab.f <- Hmisc::format.df(x=descriptive.tab.f[-c(1,51:55),], cdec=c(2,2,0,0,0,0), numeric.dollar=F)
+colnames(descriptive.tab.m)<- c("\\textit{Mean}", "\\textit{S.D.}", "最小値","最大値","\\textit{Range}")
+colnames(descriptive.tab.f)<- c("\\textit{Mean}", "\\textit{S.D.}", "最小値","最大値","\\textit{Range}")
+
+
+
+rownames(descriptive.tab.m)<- c("中高","専門・短期","大学・大学院","正規雇用","非正規雇用","自営業","無業"
+                                ,"25\\textasciitilde150万" ,"150\\textasciitilde350万" ,"350\\textasciitilde600万" ,"600万以上"
+                                ,"わからない・無回答","収入なし", "婚約者がいる","特定の交際相手がいる","現在はいない"
+                                ,"ぜひ結婚したい","できれば結婚したい","結婚してもしなくてもよい","結婚したくない"
+                                ,"結婚について考えていない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"既婚（事実婚を含む）","未婚","死別","離別","成長・安定世代","氷河期世代"
+                                ,"2007年時の年齢","2007年時の年齢二乗","同棲している")
+rownames(descriptive.tab.f)<- c("中高","専門・短期","大学・大学院","正規雇用","非正規雇用","自営業","無業"
+                                ,"25\\textasciitilde150万" ,"150\\textasciitilde350万" ,"350\\textasciitilde600万" ,"600万以上"
+                                ,"わからない・無回答","収入なし", "婚約者がいる","特定の交際相手がいる","現在はいない"
+                                ,"ぜひ結婚したい","できれば結婚したい","結婚してもしなくてもよい","結婚したくない"
+                                ,"結婚について考えていない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"そう思う","どちらともいえない","思わない","わからない"
+                                ,"既婚（事実婚を含む）","未婚","死別","離別","成長・安定世代","氷河期世代"
+                                ,"2007年時の年齢","2007年時の年齢二乗","同棲している")
+
+Hmisc::latex(object=descriptive.tab.m, title="", caption="男性", caption.loc="top", 
+             label="descriptive.hmisc", file="", here=T ,center=c("center"),
+             booktabs=T,greek=T, insert.bottom="{\\hspace*{4em}\\textit{n（observations）}}=7,410, \\textit{n（person）}}=2,365")
+
+Hmisc::latex(object=descriptive.tab.f, title="", caption="女性", caption.loc="top", 
+             label="descriptive.hmisc", file="", here=T ,center=c("center"),
+             booktabs=T,greek=T, insert.bottom="{\\hspace*{4em}\\textit{n（observations）}}=7,410, \\textit{n（person）}}=2,435, 非該当値は欠損値として処理")
+
+
 
 Table = xtabs( ~lagcohabit+event.mar4,
 data = cochrand.m)
